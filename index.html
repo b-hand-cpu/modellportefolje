@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Modellportefølje</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            color: #222;
+        }
+        h1 { margin-bottom: 0.2em; }
+        .undertittel { color: #666; margin-bottom: 2em; }
+        #graf { margin-bottom: 3em; }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+        th:first-child, td:first-child { text-align: left; }
+        th { background: #f5f5f5; }
+        .positiv { color: #0a7d2f; }
+        .negativ { color: #c0392b; }
+    </style>
+</head>
+<body>
+    <h1>Modellportefølje</h1>
+    <p class="undertittel">Oslo Børs · likevektet · vs OSEBX</p>
+
+    <div id="graf"></div>
+
+    <h2>Aksjer i porteføljen</h2>
+    <table id="tabell">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Inn</th>
+                <th>Kjøpskurs</th>
+                <th>Sistekurs</th>
+                <th>Avkastning</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        // Enkel CSV-parser: splitt på linjeskift og komma
+        function parseCSV(tekst) {
+            const linjer = tekst.trim().split(/\r?\n/);
+            const kolonner = linjer[0].split(",").map(s => s.trim());
+            return linjer.slice(1).map(linje => {
+                const verdier = linje.split(",").map(s => s.trim());
+                const rad = {};
+                kolonner.forEach((kol, i) => rad[kol] = verdier[i]);
+                return rad;
+            });
+        }
+
+        // Last ned og parse en CSV-fil
+        async function lastCSV(sti) {
+            const respons = await fetch(sti);
+            const tekst = await respons.text();
+            return parseCSV(tekst);
+        }
+
+        // Tegn grafen
+        async function tegnGraf() {
+            const data = await lastCSV("data/performance.csv");
+
+            const datoer = data.map(r => r.dato);
+            const portefolje = data.map(r => parseFloat(r.portefolje_kumulativ));
+            const osebx = data.map(r => parseFloat(r.osebx_kumulativ));
+
+            const spor = [
+                {
+                    x: datoer,
+                    y: portefolje,
+                    name: "Portefølje",
+                    type: "scatter",
+                    mode: "lines",
+                    line: { color: "#1f77b4", width: 2 }
+                },
+                {
+                    x: datoer,
+                    y: osebx,
+                    name: "OSEBX",
+                    type: "scatter",
+                    mode: "lines",
+                    line: { color: "#ff7f0e", width: 2 }
+                }
+            ];
+
+            const layout = {
+                title: "Kumulativ avkastning siden start",
+                xaxis: { title: "Dato" },
+                yaxis: { title: "Avkastning (%)", zeroline: true },
+                hovermode: "x unified",
+                margin: { t: 50, r: 20, b: 50, l: 60 }
+            };
+
+            Plotly.newPlot("graf", spor, layout, { responsive: true });
+        }
+
+        // Fyll tabellen
+        async function fyllTabell() {
+            const data = await lastCSV("data/per_aksje.csv");
+            const tbody = document.querySelector("#tabell tbody");
+
+            data.forEach(rad => {
+                const avk = parseFloat(rad.avkastning_pct);
+                const klasse = avk >= 0 ? "positiv" : "negativ";
+                const fortegn = avk >= 0 ? "+" : "";
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${rad.ticker}</td>
+                        <td>${rad.inn_dato}</td>
+                        <td>${rad.kjopskurs}</td>
+                        <td>${rad.sistekurs}</td>
+                        <td class="${klasse}">${fortegn}${avk.toFixed(2)}%</td>
+                    </tr>
+                `;
+            });
+        }
+
+        tegnGraf();
+        fyllTabell();
+    </script>
+</body>
+</html>
