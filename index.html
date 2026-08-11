@@ -42,13 +42,30 @@
             <tr>
                 <th>Ticker</th>
                 <th>Inn</th>
-                <th>Kjøpskurs</th>
-                <th>Sistekurs</th>
-                <th>Avkastning</th>
+                <th>Kurs inn</th>
+                <th>Siste kurs</th>
+                <th>Uken</th>
+                <th>Siden inntak</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>
+
+    <section class="metodikk">
+        <h2>Metodikk</h2>
+        <p>
+            Porteføljen er likevektet slik at hver aksje har lik vekt uansett antall
+            aksjer i porteføljen. Inn- og utkurs baseres på sluttkurs den dagen aksjen tas inn i
+            eller ut av porteføljen. Første avkastningsdag er dagen etter inntak, altså
+            endringen fra inntaksdato til dagen etter. 
+            Prisdata hentes fra Yahoo Finance og er justert for utbytte og aksjesplitter.
+            Benchmark er <strong>OSEBX</strong>. Avkastning måles i norske kroner og inkluderer ikke
+            transaksjonskostnader eller skatt.
+        </p>
+        <p class="disclaimer">
+            Dette er et personlig prosjekt for læringsformål og utgjør ikke investeringsråd.
+        </p>
+    </section>
 
     <script>
         // Enkel CSV-parser: splitt på linjeskift og komma
@@ -85,7 +102,8 @@
                     name: "Portefølje",
                     type: "scatter",
                     mode: "lines",
-                    line: { color: "#1f77b4", width: 2 }
+                    line: { color: "#1a4d3a", width: 2 },
+                    marker: { color: "#1a4d3a", size: 5 }
                 },
                 {
                     x: datoer,
@@ -93,19 +111,67 @@
                     name: "OSEBX",
                     type: "scatter",
                     mode: "lines",
-                    line: { color: "#ff7f0e", width: 2 }
+                    line: { color: "#c65d3e", width: 2 },
+                    marker: { color: "#c65d3e", size: 5 }
                 }
             ];
 
             const layout = {
-                title: "Kumulativ avkastning siden start",
-                xaxis: { title: "Dato" },
-                yaxis: { title: "Avkastning (%)", zeroline: true },
+                title: {
+                    text: "Kumulativ avkastning siden start",
+                    font: { size: 16, color: "#222", family: "-apple-system, BlinkMacSystemFont, sans-serif" }
+                },
+                xaxis: { 
+                    title: "",
+                    showgrid: false,
+                    showline: true,
+                    linecolor: "#333",
+                    tickfont: { color: "#666", size: 11 }
+                },
+                yaxis: { 
+                    title: { text: "Avkastning (%)", font: { size: 12, color: "#666" } },
+                    zeroline: true,
+                    zerolinecolor: "#999",
+                    zerolinewidth: 1,
+                    showline: true,
+                    linecolor: "#333",
+                    gridcolor: "#d0d0d0",
+                    tickfont: { color: "#666", size: 11 },
+                    ticksuffix: "%"
+                },
                 hovermode: "x unified",
-                margin: { t: 50, r: 20, b: 50, l: 60 }
+                hoverlabel: {
+                    bgcolor: "white",
+                    bordercolor: "#ddd",
+                    font: { size: 12 }
+                },
+                legend: {
+                    x: 0.02,
+                    y: 0.98,
+                    bgcolor: "rgba(255,255,255,0.9)",
+                    bordercolor: "#eee",
+                    borderwidth: 1,
+                    font: { size: 12 }
+                },
+                margin: { t: 60, r: 30, b: 40, l: 60 },
+                plot_bgcolor: "white",
+                paper_bgcolor: "white",
+                shapes: [
+                    {
+                        type: "line",
+                        xref: "paper",
+                        yref: "paper",
+                        x0: 0, x1: 1,
+                        y0: 1, y1: 1,
+                        line: { color: "#333", width: 1 }
+                    }
+                ]
             };
 
-            Plotly.newPlot("graf", spor, layout, { responsive: true });
+            Plotly.newPlot("graf", spor, layout, { 
+                responsive: true,
+                displayModeBar: false  // fjerner Plotly-verktøylinjen øverst
+            });
         }
 
         // Fyll tabellen
@@ -115,16 +181,23 @@
 
             data.forEach(rad => {
                 const avk = parseFloat(rad.avkastning_pct);
-                const klasse = avk >= 0 ? "positiv" : "negativ";
-                const fortegn = avk >= 0 ? "+" : "";
+                const uke = rad.uke_avkastning_pct ? parseFloat(rad.uke_avkastning_pct) : null;
+                
+                const totalKlasse = avk >= 0 ? "positiv" : "negativ";
+                const totalFortegn = avk >= 0 ? "+" : "";
+                
+                const ukeCell = uke !== null
+                    ? `<td class="${uke >= 0 ? "positiv" : "negativ"}">${uke >= 0 ? "+" : ""}${uke.toFixed(2)}%</td>`
+                    : `<td>—</td>`;
 
                 tbody.innerHTML += `
                     <tr>
-                        <td>${rad.ticker}</td>
+                        <td><strong>${rad.ticker.replace(".OL", "")}</strong></td>
                         <td>${rad.inn_dato}</td>
                         <td>${rad.kjopskurs}</td>
                         <td>${rad.sistekurs}</td>
-                        <td class="${klasse}">${fortegn}${avk.toFixed(2)}%</td>
+                        ${ukeCell}
+                        <td class="${totalKlasse}">${totalFortegn}${avk.toFixed(2)}%</td>
                     </tr>
                 `;
             });

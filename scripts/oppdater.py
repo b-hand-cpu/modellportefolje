@@ -80,7 +80,7 @@ def beregn_performance(priser, eid, tickere):
 
 
 def beregn_per_aksje(holdings, priser):
-    """Total avkastning per aksje siden inntak."""
+    """Total avkastning + siste ukes avkastning per aksje siden inntak."""
     rader = []
     for _, rad in holdings.iterrows():
         ticker = rad["ticker"]
@@ -91,13 +91,25 @@ def beregn_per_aksje(holdings, priser):
         sistekurs = priser[ticker].asof(ut)
         total = (sistekurs / kjopskurs - 1) * 100
         
+        # Siste ukes avkastning: sluttkurs 5 handelsdager tilbake
+        # Vi bruker index-posisjon slik at helger/helligdager håndteres automatisk
+        priser_ticker = priser[ticker].dropna()
+        priser_frem_til_ut = priser_ticker.loc[:ut]
+        
+        if len(priser_frem_til_ut) >= 6:
+            kurs_uke_siden = priser_frem_til_ut.iloc[-6]
+            uke_avk = (sistekurs / kurs_uke_siden - 1) * 100
+        else:
+            uke_avk = None  # ikke nok historikk (nylig inntatt aksje)
+        
         rader.append({
             "ticker": ticker,
             "inn_dato": inn.date(),
             "ut_dato": ut.date() if pd.notna(rad["ut_dato"]) else "",
             "kjopskurs": round(kjopskurs, 2),
             "sistekurs": round(sistekurs, 2),
-            "avkastning_pct": round(total, 2)
+            "avkastning_pct": round(total, 2),
+            "uke_avkastning_pct": round(uke_avk, 2) if uke_avk is not None else ""
         })
     
     return pd.DataFrame(rader)
