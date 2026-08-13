@@ -1,0 +1,5 @@
+pyyaml
+markdown
+jinja2
+yfinance
+pandas
