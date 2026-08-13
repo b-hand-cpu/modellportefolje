@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+    <meta charset="UTF-8">
+    <title>Modellportefølje</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            color: #222;
+            line-height: 1.5;
+        }
+        h1 { border-bottom: 2px solid #222; padding-bottom: 0.5rem; }
+        details {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+        }
+        details[open] { background: #fafafa; }
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        summary .ticker { color: #666; font-weight: 400; margin-left: 0.5rem; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 0.5rem 1.5rem;
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: #f4f4f4;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .stat-label { color: #666; font-size: 0.8rem; }
+        .stat-value { font-weight: 600; }
+        .tese { margin-top: 1rem; }
+        .tese h2 { font-size: 1.1rem; margin-top: 1rem; }
+        footer { color: #888; font-size: 0.85rem; margin-top: 3rem; }
+    </style>
+</head>
+<body>
+    <h1>Modellportefølje</h1>
+    <p>Offentlig aksjeportefølje — Oslo Børs. Likevektet, ukentlig kadens.</p>
+
+    <h2>Aksjer i porteføljen</h2>
+    {% for stock in stocks %}
+    <details id="{{ stock.ticker.split('.')[0] }}">
+        <summary>
+            {{ stock.navn }}<span class="ticker">{{ stock.ticker }} · {{ stock.sektor }}</span>
+        </summary>
+        <div class="stats">
+            <div><div class="stat-label">Kurs</div><div class="stat-value">{{ stock.stats.kurs }}</div></div>
+            <div><div class="stat-label">Markedsverdi</div><div class="stat-value">{{ stock.stats.markedsverdi }}</div></div>
+            <div><div class="stat-label">P/E</div><div class="stat-value">{{ stock.stats.pe }}</div></div>
+            <div><div class="stat-label">Utbytte</div><div class="stat-value">{{ stock.stats.dividend_yield }}</div></div>
+            <div><div class="stat-label">52u høy</div><div class="stat-value">{{ stock.stats.hoy_52u }}</div></div>
+            <div><div class="stat-label">52u lav</div><div class="stat-value">{{ stock.stats.lav_52u }}</div></div>
+        </div>
+        <div class="tese">
+            {{ stock.body_html | safe }}
+        </div>
+    </details>
+    {% endfor %}
+
+    <footer>
+        Sist oppdatert: {{ build_time }} · Data: yfinance
+    </footer>
+</body>
+</html>
