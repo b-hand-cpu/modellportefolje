@@ -13,12 +13,14 @@ on:
       - 'templates/**'
       - 'scripts/**'
       - 'requirements.txt'
+      - 'data/holdings.csv'
   pull_request:
     paths:
       - 'stocks/**'
       - 'templates/**'
       - 'scripts/**'
       - 'requirements.txt'
+      - 'data/holdings.csv'
 
 permissions:
   contents: write
@@ -42,19 +44,22 @@ jobs:
       - name: Installer avhengigheter
         run: pip install -r requirements.txt
 
+      - name: Kjør oppdater.py
+        run: python scripts/oppdater.py
+
       - name: Kjør build_index.py
         run: python scripts/build_index.py
 
       # Ved pull_request stopper vi her – bygget skal bare valideres, ikke committes.
-      - name: Commit og push oppdatert index.html
+      - name: Commit og push oppdaterte data
         if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
+          git add index.html data/performance.csv data/per_aksje.csv
           if git diff --cached --quiet; then
-            echo "Ingen endringer i index.html – hopper over commit."
+            echo "Ingen endringer – hopper over commit."
           else
-            git commit -m "Oppdater index.html [skip ci]"
+            git commit -m "Oppdater portefølje [skip ci]"
             git push
           fi
