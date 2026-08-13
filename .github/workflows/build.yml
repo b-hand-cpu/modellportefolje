@@ -1,0 +1,60 @@
+name: Bygg modellportefølje
+
+on:
+  schedule:
+    # 18:00 UTC på hverdager – godt etter stengetid på Oslo Børs (16:20/16:30 lokal tid,
+    # både i CET og CEST) slik at dagens sluttkurser er tilgjengelige hos yfinance.
+    - cron: '0 18 * * 1-5'
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - 'stocks/**'
+      - 'templates/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+  pull_request:
+    paths:
+      - 'stocks/**'
+      - 'templates/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-index
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sjekk ut repo
+        uses: actions/checkout@v4
+
+      - name: Sett opp Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Installer avhengigheter
+        run: pip install -r requirements.txt
+
+      - name: Kjør build_index.py
+        run: python scripts/build_index.py
+
+      # Ved pull_request stopper vi her – bygget skal bare valideres, ikke committes.
+      - name: Commit og push oppdatert index.html
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "Ingen endringer i index.html – hopper over commit."
+          else
+            git commit -m "Oppdater index.html [skip ci]"
+            git push
+          fi
