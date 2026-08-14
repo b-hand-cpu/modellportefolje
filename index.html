@@ -41,11 +41,11 @@
         <thead>
             <tr>
                 <th>Ticker</th>
-                <th>Inn</th>
+                <th>Dato inn</th>
                 <th>Kurs inn</th>
                 <th>Siste kurs</th>
-                <th>Uken</th>
-                <th>Siden inntak</th>
+                <th>Endring siste uke (%)</th>
+                <th>Endring siden inntak (%)</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -102,8 +102,7 @@
                     name: "Portefølje",
                     type: "scatter",
                     mode: "lines",
-                    line: { color: "#1a4d3a", width: 2 },
-                    marker: { color: "#1a4d3a", size: 5 }
+                    line: { color: "#0d4f4f", width: 2.5 }
                 },
                 {
                     x: datoer,
@@ -111,14 +110,13 @@
                     name: "OSEBX",
                     type: "scatter",
                     mode: "lines",
-                    line: { color: "#c65d3e", width: 2 },
-                    marker: { color: "#c65d3e", size: 5 }
+                    line: { color: "#7ecaca", width: 2 }
                 }
             ];
 
             const layout = {
                 title: {
-                    text: "Kumulativ avkastning siden start",
+                    text: "Porteføljeavkastning vs OSEBX",
                     font: { size: 16, color: "#222", family: "-apple-system, BlinkMacSystemFont, sans-serif" }
                 },
                 xaxis: { 
@@ -146,14 +144,13 @@
                     font: { size: 12 }
                 },
                 legend: {
-                    x: 0.02,
-                    y: 0.98,
-                    bgcolor: "rgba(255,255,255,0.9)",
-                    bordercolor: "#eee",
-                    borderwidth: 1,
+                    x: 0.5,
+                    y: -0.15,
+                    xanchor: "center",
+                    orientation: "h",
                     font: { size: 12 }
                 },
-                margin: { t: 60, r: 30, b: 40, l: 60 },
+                margin: { t: 60, r: 30, b: 70, l: 60 },
                 plot_bgcolor: "white",
                 paper_bgcolor: "white",
                 shapes: [
@@ -177,6 +174,7 @@
         // Fyll tabellen
         async function fyllTabell() {
             const data = await lastCSV("data/per_aksje.csv");
+            data.sort((a, b) => a.ticker.localeCompare(b.ticker));
             const tbody = document.querySelector("#tabell tbody");
 
             data.forEach(rad => {
