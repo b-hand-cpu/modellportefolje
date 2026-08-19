@@ -28,6 +28,7 @@ def hent_priser(tickere):
     """Last ned sluttkurser for aksjer + benchmark."""
     alle = tickere + [BENCHMARK]
     priser = yf.download(alle, period=HISTORIKK, auto_adjust=True, progress=False)["Close"]
+    priser = priser.ffill()
     return priser
 
 
@@ -71,7 +72,6 @@ def beregn_performance(priser, eid, tickere):
     forste_eierdag = eid.sum(axis=1).gt(0).idxmax()
     perf = perf.loc[forste_eierdag:].copy()
     perf.iloc[0] = 0
-    perf = perf.ffill()
     
     # Legg til kumulativ avkastning (som prosent)
     perf["portefolje_kumulativ"] = ((1 + perf["portefolje"]).cumprod() - 1) * 100
