@@ -82,7 +82,7 @@
 
         // Last ned og parse en CSV-fil
         async function lastCSV(sti) {
-            const respons = await fetch(sti);
+            const respons = await fetch(sti + "?t=" + Date.now());
             const tekst = await respons.text();
             return parseCSV(tekst);
         }
